@@ -8,13 +8,15 @@ Serves the built frontend from ../frontend/dist when present (single-container d
 """
 from __future__ import annotations
 
+import hashlib
 import os
+import time
 from pathlib import Path
 
 from fastapi import FastAPI, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.gzip import GZipMiddleware
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 
@@ -53,11 +55,41 @@ def health():
 
 @app.post("/api/session")
 def create_session(birth: BirthData):
+    """Full scrub bundle for one chart. Returned as JSONResponse directly:
+    FastAPI's default path runs jsonable_encoder over the whole ~2.5 MB dict,
+    which costs more than the astronomy itself."""
+    data = birth.model_dump()
+    key = hashlib.sha256(
+        repr(sorted(data.items())).encode()
+    ).hexdigest()[:24]
+    cached = _session_cache_get(key)
+    if cached is not None:
+        return JSONResponse(cached)
     try:
-        session = engine.build_session(birth.model_dump(), span_years=120)
+        session = engine.build_session(data, span_years=120)
     except Exception as exc:  # pragma: no cover
         raise HTTPException(status_code=422, detail=f"computation failed: {exc}") from exc
-    return session
+    _session_cache_put(key, session)
+    return JSONResponse(session)
+
+
+# Small per-worker session cache (charts are deterministic; identical births hit RAM).
+_SESSION_CACHE: dict[str, tuple[float, dict]] = {}
+_SESSION_CACHE_MAX = 16
+
+
+def _session_cache_get(key: str):
+    hit = _SESSION_CACHE.get(key)
+    if hit:
+        return hit[1]
+    return None
+
+
+def _session_cache_put(key: str, session: dict) -> None:
+    if len(_SESSION_CACHE) >= _SESSION_CACHE_MAX:
+        oldest = min(_SESSION_CACHE.items(), key=lambda kv: kv[1][0])
+        _SESSION_CACHE.pop(oldest[0], None)
+    _SESSION_CACHE[key] = (time.monotonic(), session)
 
 
 class StateQuery(BaseModel):
