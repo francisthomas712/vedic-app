@@ -9,7 +9,7 @@ RUN npm run build
 # ---------- Stage 2: python deps (gcc needed here — pyswisseph builds from
 # sdist on linux; no cp312 manylinux wheel exists) ----------
 FROM python:3.12-slim AS deps
-RUN apt-get update && apt-get install -y --no-install-recommends gcc \
+RUN apt-get update && apt-get install -y --no-install-recommends gcc libc6-dev \
     && rm -rf /var/lib/apt/lists/*
 COPY backend/requirements.txt ./backend/
 # isolate into /install so the toolchain doesn't reach the runtime stage
