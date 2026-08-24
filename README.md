@@ -6,6 +6,8 @@ with every insight computed from the Swiss Ephemeris via
 [PyJHora](https://pypi.org/project/PyJHora/). **No predictions, no generative
 models** — positions and classical rules only.
 
+**Live instance:** [vedic.195-201-231-230.sslip.io](https://vedic.195-201-231-230.sslip.io)
+
 ## What it shows
 
 - **Zodiac bi-wheel** (canvas): natal ring fixed, transiting planets moving as you scrub; ℞ badges; conjunction-to-natal hints; Sade Sati shading.
