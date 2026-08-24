@@ -8,9 +8,12 @@ Serves the built frontend from ../frontend/dist when present (single-container d
 """
 from __future__ import annotations
 
+import asyncio
 import hashlib
 import os
 import time
+from concurrent.futures import ProcessPoolExecutor
+from contextlib import asynccontextmanager
 from pathlib import Path
 
 from fastapi import FastAPI, HTTPException, Query
@@ -23,9 +26,28 @@ from pydantic import BaseModel, Field
 from . import engine
 from .jhora_setup import RASIS
 
+@asynccontextmanager
+async def _lifespan(app: FastAPI):
+    # Heavy chart computation must run in a PROCESS, not a thread:
+    # swisseph.calc_ut measures ~6x slower under the event loop's GIL churn.
+    _get_pool()
+    yield
+    app.state.pool.shutdown(wait=False)
+
+
+def _get_pool() -> ProcessPoolExecutor:
+    """Lazily create the executor so TestClient-without-lifespan still works."""
+    pool = getattr(app.state, "pool", None)
+    if pool is None:
+        pool = ProcessPoolExecutor(max_workers=1)
+        app.state.pool = pool
+    return pool
+
+
 app = FastAPI(title="Vedic Visualizer", version="0.1.0",
               description="Deterministic Vedic astrology timeline visualizer. "
-                          "No predictions — positions, periods and classical rules only.")
+                          "No predictions — positions, periods and classical rules only.",
+              lifespan=_lifespan)
 
 app.add_middleware(GZipMiddleware, minimum_size=2048)
 app.add_middleware(
@@ -54,10 +76,11 @@ def health():
 
 
 @app.post("/api/session")
-def create_session(birth: BirthData):
-    """Full scrub bundle for one chart. Returned as JSONResponse directly:
-    FastAPI's default path runs jsonable_encoder over the whole ~2.5 MB dict,
-    which costs more than the astronomy itself."""
+async def create_session(birth: BirthData):
+    """Full scrub bundle for one chart. Runs in a process pool (see _lifespan)
+    and returns JSONResponse directly: FastAPI's default path runs
+    jsonable_encoder over the whole ~2.5 MB dict, which costs more than the
+    astronomy itself."""
     data = birth.model_dump()
     key = hashlib.sha256(
         repr(sorted(data.items())).encode()
@@ -65,8 +88,11 @@ def create_session(birth: BirthData):
     cached = _session_cache_get(key)
     if cached is not None:
         return JSONResponse(cached)
+    loop = asyncio.get_running_loop()
     try:
-        session = engine.build_session(data, span_years=120)
+        session = await loop.run_in_executor(
+            _get_pool(), engine.build_session, data, 120,
+        )
     except Exception as exc:  # pragma: no cover
         raise HTTPException(status_code=422, detail=f"computation failed: {exc}") from exc
     _session_cache_put(key, session)

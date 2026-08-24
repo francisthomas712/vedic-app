@@ -16,6 +16,8 @@
 - All engine functions are pure: `(birth, jd) -> dict`. No randomness, no ML.
 - Every user-facing label must trace to a classical rule + ephemeris number.
 - Tithi/nakshatra are computed from first principles (elongation/moon arcs), not from opaque library tuple formats.
+- **`swisseph.calc_ut` is ~6x slower when called from worker threads** (GIL churn with the event loop) — heavy compute MUST go through the process pool (`_get_pool()` in `main.py`), never a plain sync def route or thread executor. Measured: 0.22s vs 1.32s per 20k lunar longitudes.
+- Returning big dicts from routes directly triggers FastAPI's `jsonable_encoder` over the whole payload (~25s on a 2.5MB session!) — always return `JSONResponse(dict)` for large payloads.
 - After touching the engine run: `cd backend && PYTHONPATH=. python -m pytest tests/ -q`
 
 ## Frontend
