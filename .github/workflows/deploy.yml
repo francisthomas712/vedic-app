@@ -1,0 +1,32 @@
+name: Deploy to Hetzner
+
+# Manual deploy: builds nothing locally — pulls the repo on the server and
+# rebuilds there. Simple, no registry needed for a single-box setup.
+on:
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: SSH deploy (git pull + compose up)
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.HETZNER_HOST }}
+          username: ${{ secrets.HETZNER_USER }}
+          key: ${{ secrets.HETZNER_SSH_KEY }}
+          script: |
+            set -e
+            cd /opt/vedic-app
+            git pull --ff-only
+            docker compose build --pull
+            docker compose up -d
+            docker image prune -f
+            # wait for health
+            for i in $(seq 1 30); do
+              if curl -fsS http://127.0.0.1:8080/api/health > /dev/null; then
+                echo "healthy after ${i}s"; exit 0
+              fi
+              sleep 1
+            done
+            echo "container failed healthcheck"; docker compose logs --tail=50; exit 1

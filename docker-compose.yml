@@ -1,0 +1,17 @@
+services:
+  vedic:
+    build: .
+    image: vedic-visualizer:latest
+    container_name: vedic-visualizer
+    restart: unless-stopped
+    ports:
+      # Caddy (already on the host) proxies your domain -> this port.
+      # Keep it loopback-only so nothing bypasses Caddy/TLS.
+      - "127.0.0.1:8080:8000"
+    environment:
+      WORKERS: "2"
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request;urllib.request.urlopen('http://127.0.0.1:8000/api/health')"]
+      interval: 30s
+      timeout: 5s
+      start_period: 15s

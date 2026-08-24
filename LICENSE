@@ -1,0 +1,10 @@
+GNU AFFERO GENERAL PUBLIC LICENSE
+Version 3, 19 November 2007
+
+This project links against PyJHora (AGPL-3.0) and Swiss Ephemeris via pyswisseph
+(AGPL-3.0). Accordingly this repository is licensed under AGPL-3.0.
+
+Full text: https://www.gnu.org/licenses/agpl-3.0.txt
+
+If you run a modified version of this software as a network service, you must
+offer its complete source code to its users (AGPL §13).

@@ -1,0 +1,17 @@
+# python
+__pycache__/
+*.pyc
+.pytest_cache/
+.venv/
+
+# node / vite
+frontend/node_modules/
+frontend/dist/
+
+# env & editors
+.env
+.DS_Store
+
+# local artifacts
+*.log
+nohup.out
