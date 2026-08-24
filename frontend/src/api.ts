@@ -77,6 +77,32 @@ export const SIGN_KEYS = [
 export const SIGN_GLYPHS = ["♈","♉","♊","♋","♌","♍","♎","♏","♐","♑","♒","♓"];
 export const SIGN_SANSKRIT = ["Mesha","Vrishabha","Mithuna","Karka","Simha","Kanya","Tula","Vrischika","Dhanu","Makara","Kumbha","Meena"];
 
+export interface PlaceResult {
+  name: string; state: string; country: string;
+  lat: number; lon: number; tz: number; match: string;
+}
+
+export async function searchPlaces(q: string, limit = 8): Promise<PlaceResult[]> {
+  const res = await fetch(`/api/places?q=${encodeURIComponent(q)}&limit=${limit}`);
+  if (!res.ok) return [];
+  const body = await res.json();
+  return body.results ?? [];
+}
+
+export function tzLabel(tz: number): string {
+  const sign = tz < 0 ? "−" : "+";
+  const h = Math.floor(Math.abs(tz));
+  const m = Math.round((Math.abs(tz) - h) * 60);
+  return `UTC${sign}${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}`;
+}
+
+export function placeLabel(p: PlaceResult): string {
+  const bits = [p.name];
+  if (p.state && p.state !== p.name) bits.push(p.state);
+  if (p.country) bits.push(p.country);
+  return bits.join(", ");
+}
+
 export async function createSession(birth: BirthData): Promise<Session> {
   const res = await fetch("/api/session", {
     method: "POST",

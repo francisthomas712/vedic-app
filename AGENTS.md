@@ -27,3 +27,4 @@
 ## Deploy
 - Single-container deploy; Caddy already lives on the host — never add Caddy to Docker here.
 - App binds `127.0.0.1:8080` inside compose; TLS terminates at host Caddy.
+- `backend/data/places.db` is GENERATED during docker build (`python -m app.places`) from jhora's bundled GeoNames CSVs — never commit it; keep `ephe/*.se1` committed.

@@ -23,7 +23,7 @@ from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 
-from . import engine
+from . import engine, places
 from .jhora_setup import RASIS
 
 @asynccontextmanager
@@ -73,6 +73,21 @@ class BirthData(BaseModel):
 @app.get("/api/health")
 def health():
     return {"ok": True, "service": "vedic-visualizer", "version": app.version}
+
+
+@app.get("/api/places")
+def search_place(q: str = Query(..., min_length=2, max_length=80),
+                 limit: int = Query(8, ge=1, le=25)):
+    """Autocomplete for birthplace. Returns name/state/country + lat/lon/tz so
+    users never hand-type coordinates. Backed by the GeoNames index baked at
+    image build time."""
+    if not places.DB_PATH.exists():
+        raise HTTPException(status_code=503,
+                            detail="place index missing — build with: python -m app.places")
+    try:
+        return JSONResponse({"results": places.search_places(q, limit)})
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=f"place search failed: {exc}") from exc
 
 
 @app.post("/api/session")

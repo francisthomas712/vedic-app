@@ -138,6 +138,38 @@ class TestEventsAndPeriods:
         assert s["periods"]["sadeSati"], "expected ≥1 sade sati window in 60y"
 
 
+class TestPlaces:
+    def test_kochi_resolves(self):
+        import pytest as _pytest
+        from app import places as places_mod
+        if not places_mod.DB_PATH.exists():
+            _pytest.skip("places.db not built (run: python -m app.places)")
+        res = places_mod.search_places("Kochi", 5)
+        assert res, "no results for Kochi"
+        top = res[0]
+        assert top["country"] == "India" and top["state"] == "Kerala"
+        assert top["tz"] == 5.5
+        assert abs(top["lat"] - 9.94) < 0.2 and abs(top["lon"] - 76.26) < 0.2
+
+    def test_alias_search(self):
+        from app import places as places_mod
+        if not places_mod.DB_PATH.exists():
+            return
+        res = places_mod.search_places("Calcutta", 8)
+        assert any(r["name"] == "Kolkata" for r in res), "alias Calcutta→Kolkata failed"
+
+    def test_places_endpoint(self):
+        from app import places as places_mod
+        if not places_mod.DB_PATH.exists():
+            return
+        c = TestClient(app)
+        r = c.get("/api/places", params={"q": "Chennai"})
+        assert r.status_code == 200
+        body = r.json()
+        assert body["results"], "empty results"
+        assert {"name", "lat", "lon", "tz"} <= set(body["results"][0].keys())
+
+
 class TestAPI:
     def test_health(self):
         c = TestClient(app)

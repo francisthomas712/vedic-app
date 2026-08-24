@@ -48,13 +48,49 @@ button { font-family: inherit; cursor: pointer; }
   background: var(--panel); border: 1px solid rgba(255,255,255,0.09); border-radius: 8px;
   outline: none; font-size: 13px;
 }
-.birth-form input.wide { width: 130px; }
+.birth-form input.wide { width: 230px; }
 .birth-form input:focus { border-color: rgba(212,175,55,0.45); }
 .birth-form button {
   padding: 8px 16px; border-radius: 8px; border: none; font-weight: 600;
   color: #14100a; background: linear-gradient(180deg, #e7c65b, var(--gold));
 }
 .birth-form button:hover { filter: brightness(1.06); }
+.birth-form button:disabled { opacity: 0.6; cursor: wait; }
+
+/* grouped date/time inputs */
+.dt-group { display: flex; align-items: center; gap: 2px;
+  border: 1px solid rgba(255,255,255,0.09); border-radius: 8px; padding: 0 4px;
+  background: var(--panel); }
+.dt-group input { border: none !important; background: transparent !important; width: 46px; text-align: center; }
+.dt-group input:focus { outline: none; }
+.dt-colon { color: var(--muted); }
+
+/* place autocomplete */
+.place-wrap { position: relative; }
+.place-dd {
+  position: absolute; top: calc(100% + 4px); left: 0; z-index: 50;
+  min-width: 320px; max-height: 320px; overflow-y: auto;
+  background: #131a30; border: 1px solid rgba(212,175,55,0.25); border-radius: 10px;
+  box-shadow: 0 16px 48px rgba(0,0,0,0.6); padding: 4px;
+}
+.place-opt {
+  display: flex; flex-direction: column; align-items: flex-start; gap: 1px;
+  width: 100%; text-align: left; padding: 7px 10px; border: none; border-radius: 7px;
+  background: transparent; color: var(--ink);
+}
+.place-opt.hl { background: rgba(212,175,55,0.12); }
+.place-opt-name { font-weight: 600; font-size: 13.5px; }
+.place-opt-meta { font-size: 11px; color: var(--muted); }
+
+/* resolved place summary + manual override */
+.place-meta { font-size: 12px; color: var(--muted); display: flex; gap: 8px; align-items: center;
+  flex-basis: 100%; padding-left: 2px; }
+.place-meta.warn { color: #e7c65b; }
+.link-btn { background: none; border: none; color: var(--gold); font-size: 12px;
+  padding: 0 4px; text-decoration: underline; text-underline-offset: 3px; }
+.manual-row { display: flex; gap: 10px; align-items: center; flex-basis: 100%; font-size: 12px; color: var(--muted); }
+.manual-row label { display: flex; gap: 5px; align-items: center; }
+.manual-row input { width: 96px !important; }
 
 .banner { padding: 10px 14px; border-radius: 10px; margin-bottom: 12px;
   background: rgba(139,125,216,0.12); border: 1px solid rgba(139,125,216,0.3); }

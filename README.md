@@ -14,6 +14,7 @@ models** — positions and classical rules only.
 - **Daśā lanes**: Mahādaśā / Antara / Pratyantar ribbons with the active period highlighted; click any segment to jump the playhead there. Cross-checked against PyJHora's authoritative running-daśā in tests.
 - **Event timeline**: 5,000+ precomputed events over ~120 years — sign ingresses (Mars→Ketu, refined to arc-minute precision), stations, place-visible eclipses, daśā boundaries, Sade Sati bands.
 - **Insights panel** (deterministic): running daśā chain with years-left, panchanga (tithi/nakshatra-pada/sunrise/sunset), transit table with dignities and Moon-relative houses.
+- **Birthplace autocomplete**: type a city → coordinates + timezone auto-fill (GeoNames index baked at image build; aliases like *Calcutta → Kolkata* work; manual lat/lon/tz override for edge cases).
 
 ## Architecture
 

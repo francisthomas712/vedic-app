@@ -21,7 +21,9 @@ WORKDIR /srv
 COPY --from=deps /install /usr/local
 
 COPY backend/app ./backend/app
-COPY backend/data ./backend/data
+COPY backend/data/ephe ./backend/data/ephe
+# Bake the GeoNames place index (built from jhora's bundled CSVs) for autocomplete
+RUN cd backend && python -m app.places
 COPY --from=web /build/dist ./frontend/dist
 
 ENV PYTHONPATH=/srv/backend \
