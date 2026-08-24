@@ -2,6 +2,7 @@
 
 ## Compute stack facts
 - Backend targets **Python 3.12**: pyswisseph ships wheels ≤3.12; don't bump blindly.
+- **pyswisseph has NO cp312 manylinux Linux wheel** — on Linux it builds from sdist and needs `gcc`. The Dockerfile uses a `deps` stage with gcc (`--prefix=/install`) copied into a toolchain-free runtime stage. Keep that structure.
 - **PyJHora quirks learned the hard way:**
   - pip wheel ships without ephemeris data — `app/jhora_setup.ensure_ephemeris_files()` copies vendored files from `backend/data/ephe` at import. Keep those two `.se1` files in git.
   - Import ONLY `jhora.panchanga.drik`, `jhora.horoscope.*`, `jhora.utils` — never `jhora.ui.*` (drags PyQt6).

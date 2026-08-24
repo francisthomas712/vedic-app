@@ -6,13 +6,19 @@ RUN npm ci --no-audit --no-fund
 COPY frontend/ .
 RUN npm run build
 
-# ---------- Stage 2: runtime ----------
+# ---------- Stage 2: python deps (gcc needed here — pyswisseph builds from
+# sdist on linux; no cp312 manylinux wheel exists) ----------
+FROM python:3.12-slim AS deps
+RUN apt-get update && apt-get install -y --no-install-recommends gcc \
+    && rm -rf /var/lib/apt/lists/*
+COPY backend/requirements.txt ./backend/
+# isolate into /install so the toolchain doesn't reach the runtime stage
+RUN pip install --no-cache-dir --prefix=/install -r backend/requirements.txt
+
+# ---------- Stage 3: runtime (toolchain-free) ----------
 FROM python:3.12-slim AS app
 WORKDIR /srv
-
-# pyswisseph ships manylinux wheels for 3.12; slim is enough (no build deps needed)
-COPY backend/requirements.txt ./backend/
-RUN pip install --no-cache-dir -r backend/requirements.txt
+COPY --from=deps /install /usr/local
 
 COPY backend/app ./backend/app
 COPY backend/data ./backend/data
